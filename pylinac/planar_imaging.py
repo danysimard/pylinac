@@ -880,6 +880,17 @@ class LeedsTOR(ImagePhantomBase):
         if show:
             plt.show()
 
+    def _mtf(self, x=50):
+        norm = max(roi.mtf for roi in self.hc_rois)
+        ys = [roi.mtf / norm for roi in self.hc_rois]
+        xs = np.arange(len(ys))
+        f = interp1d(ys, xs)
+        try:
+            mtf = f(x / 100)
+        except ValueError:
+            mtf = min(ys)
+        return float(mtf)
+
     def publish_pdf(self, filename=None, author=None, unit=None, notes=None, open_file=False):
         """Publish a PDF report of the analyzed phantom. The report includes basic
         file information, the image and determined ROIs, and contrast and MTF plots.
@@ -909,7 +920,7 @@ class LeedsTOR(ImagePhantomBase):
             canvas.drawImage(img, w * cm, l * cm, width=10 * cm, height=10 * cm, preserveAspectRatio=True)
         text = ['Leeds TOR18 results:',
                 'MTF 80% (lp/mm): {:2.2f}'.format(self._mtf(80)),
-                'Median Contrast: {:2.2f}'.format(np.median([roi.contrast for roi in self.lc_rois])),
+                'Median Contrast: {:2.3f}'.format(np.median([roi.contrast for roi in self.lc_rois])),
                 'Median CNR: {:2.1f}'.format(np.median([roi.contrast_to_noise for roi in self.lc_rois])),
                 ]
         pdf.draw_text(canvas, x=10 * cm, y=25.5 * cm, text=text)
